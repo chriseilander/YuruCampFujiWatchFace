@@ -1,0 +1,94 @@
+{
+    "author": "ChrisEilander.nl",
+    "dependencies": {},
+    "keywords": [
+        "pebble-app"
+    ],
+    "name": "yuru-camp",
+    "pebble": {
+        "displayName": "Yuru Camp Mount Fuji",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/fuji background",
+                    "name": "BG_FUJI",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "fonts/Chelsea Market Font.ttf",
+                    "name": "FONT_CHELSEA_43",
+                    "targetPlatforms": [
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Chelsea Market Font.ttf",
+                    "name": "FONT_CHELSEA_31",
+                    "targetPlatforms": [
+                        "aplite",
+                        "basalt",
+                        "chalk",
+                        "diorite",
+                        "flint"
+                    ],
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Chelsea Market Font.ttf",
+                    "name": "FONT_CHELSEA_20",
+                    "targetPlatforms": [
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "font"
+                },
+                {
+                    "file": "fonts/Chelsea Market Font.ttf",
+                    "name": "FONT_CHELSEA_14",
+                    "targetPlatforms": [
+                        "aplite",
+                        "basalt",
+                        "chalk",
+                        "diorite",
+                        "flint"
+                    ],
+                    "type": "font"
+                },
+                {
+                    "file": "images/rinhead",
+                    "name": "HEAD_RIN",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt",
+            "chalk",
+            "emery",
+            "gabbro"
+        ],
+        "uuid": "af514188-b667-4d9c-9523-9eebdacbefa3",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
