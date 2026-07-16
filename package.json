@@ -1,14 +1,21 @@
 {
-    "author": "ChrisEilander.nl",
-    "dependencies": {},
+    "author": "Chris Eilander",
+    "dependencies": {
+        "@rebble/clay": "^1.0.10"
+    },
     "keywords": [
         "pebble-app"
     ],
     "name": "yuru-camp",
     "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
         "displayName": "Yuru Camp Mount Fuji",
         "enableMultiJS": true,
-        "messageKeys": [],
+        "messageKeys": [
+            "Camper"
+        ],
         "projectType": "native",
         "resources": {
             "media": [
@@ -66,8 +73,48 @@
                     "type": "font"
                 },
                 {
-                    "file": "images/rinhead",
+                    "file": "images/tentMenu",
+                    "menuIcon": true,
+                    "name": "IMG_TENTMENU",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/nadeshiko_s2",
+                    "name": "HEAD_NADESHIKO",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/rin_s2",
                     "name": "HEAD_RIN",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/chiaki_s2",
+                    "name": "HEAD_CHIAKI",
+                    "targetPlatforms": [
+                        "basalt",
+                        "chalk",
+                        "emery",
+                        "gabbro"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/aoi_s2",
+                    "name": "HEAD_AOI",
                     "targetPlatforms": [
                         "basalt",
                         "chalk",

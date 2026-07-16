@@ -1,5 +1,16 @@
 #include <pebble.h>
 
+// Persistent storage key
+#define SETTINGS_KEY 1
+
+// Define our settings struct
+typedef struct ClaySettings {
+  char Camper[10];
+} ClaySettings;
+
+// An instance of the struct
+static ClaySettings settings;
+
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
@@ -11,6 +22,49 @@ static BitmapLayer *s_chathead_layer;
 uint8_t chathead_size;
 static GFont s_main_font;
 static GFont s_seco_font;
+
+// Set default settings
+static void prv_default_settings() {
+  strncpy(settings.Camper, "rin", 10);
+}
+
+// Save settings to persistent storage
+static void prv_save_settings() {
+  persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
+// Read settings from persistent storage
+static void prv_load_settings() {
+  // Set defaults first
+  prv_default_settings();
+  // Then override with any saved values
+  persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
+static void update_chathead(){
+	if (s_chathead != NULL){
+    gbitmap_destroy(s_chathead);
+    s_chathead = NULL;
+  }
+	
+	if (strcmp(settings.Camper,"rin") == 0){
+		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN);
+	} else if (strcmp(settings.Camper,"nadeshiko") == 0) {
+		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_NADESHIKO);
+	} else if (strcmp(settings.Camper,"chiaki") == 0) {
+		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_CHIAKI);
+	} else if (strcmp(settings.Camper,"aoi") == 0) {
+		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_AOI);
+	}
+	
+	bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
+  bitmap_layer_set_bitmap(s_chathead_layer, s_chathead);
+}
+
+// Apply settings to UI elements
+static void prv_update_display() {
+	update_chathead();
+}
 
 static void update_time() {
   // Get a tm structure
@@ -35,6 +89,33 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+}
+
+// AppMessage received handler
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  // Check for Clay settings data
+  Tuple *camper_t = dict_find(iterator, MESSAGE_KEY_Camper);
+  if (camper_t) {
+    strncpy(settings.Camper, camper_t->value->cstring, 10);
+  }
+
+  // Save and apply if any settings were changed
+  if (camper_t) {
+    prv_save_settings();
+    prv_update_display();
+  }
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
 static void main_window_load(Window *window) {
@@ -84,7 +165,7 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_date_layer, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft));
 	
 	s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
-	s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN);
+	s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN); // Rin is standard, if its not the one that is set, its changed later when calling prv_update_display()
 	
 	// Create background image bitmaplayer
   s_bg_layer = bitmap_layer_create(
@@ -112,6 +193,8 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, bitmap_layer_get_layer(s_chathead_layer));
 	
+	// Apply saved settings
+  prv_update_display();
 }
 
 static void main_window_unload(Window *window) {
@@ -126,6 +209,9 @@ static void main_window_unload(Window *window) {
 }
 
 static void init() {
+	// Load settings before creating UI
+  prv_load_settings();
+	
   // Create main Window element and assign to pointer
   s_main_window = window_create();
 
@@ -146,6 +232,17 @@ static void init() {
 
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+	
+	// Register AppMessage callbacks
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+
+  // Open AppMessage
+  const int inbox_size = 256;
+  const int outbox_size = 256;
+  app_message_open(inbox_size, outbox_size);
 }
 
 static void deinit() {
