@@ -22,12 +22,7 @@
                 {
                     "file": "images/fuji background",
                     "name": "BG_FUJI",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
@@ -82,60 +77,49 @@
                 {
                     "file": "images/nadeshiko_s2",
                     "name": "HEAD_NADESHIKO",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
                     "file": "images/rin_s2",
                     "name": "HEAD_RIN",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
                     "file": "images/chiaki_s2",
                     "name": "HEAD_CHIAKI",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/ena_s2",
+                    "name": "HEAD_ENA",
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
                     "file": "images/aoi_s2",
                     "name": "HEAD_AOI",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 }
             ]
         },
         "sdkVersion": "3",
         "targetPlatforms": [
+            "aplite",
             "basalt",
             "chalk",
+            "diorite",
             "emery",
-            "gabbro"
+            "gabbro",
+            "flint"
         ],
         "uuid": "af514188-b667-4d9c-9523-9eebdacbefa3",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.1"
 }

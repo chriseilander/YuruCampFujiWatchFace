@@ -55,6 +55,8 @@ static void update_chathead(){
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_CHIAKI);
 	} else if (strcmp(settings.Camper,"aoi") == 0) {
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_AOI);
+	} else if (strcmp(settings.Camper,"ena") == 0) {
+		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_ENA);
 	}
 	
 	bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
