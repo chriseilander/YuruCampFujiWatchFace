@@ -1,26 +1,28 @@
 {
-    "author": "ChrisEilander.nl",
-    "dependencies": {},
+    "author": "Chris Eilander",
+    "dependencies": {
+        "@rebble/clay": "^1.0.10"
+    },
     "keywords": [
         "pebble-app"
     ],
     "name": "yuru-camp",
     "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
         "displayName": "Yuru Camp Mount Fuji",
         "enableMultiJS": true,
-        "messageKeys": [],
+        "messageKeys": [
+            "Camper"
+        ],
         "projectType": "native",
         "resources": {
             "media": [
                 {
                     "file": "images/fuji background",
                     "name": "BG_FUJI",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
@@ -66,29 +68,58 @@
                     "type": "font"
                 },
                 {
-                    "file": "images/rinhead",
+                    "file": "images/tentMenu",
+                    "menuIcon": true,
+                    "name": "IMG_TENTMENU",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/nadeshiko_s2",
+                    "name": "HEAD_NADESHIKO",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/rin_s2",
                     "name": "HEAD_RIN",
-                    "targetPlatforms": [
-                        "basalt",
-                        "chalk",
-                        "emery",
-                        "gabbro"
-                    ],
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/chiaki_s2",
+                    "name": "HEAD_CHIAKI",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/ena_s2",
+                    "name": "HEAD_ENA",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/aoi_s2",
+                    "name": "HEAD_AOI",
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 }
             ]
         },
         "sdkVersion": "3",
         "targetPlatforms": [
+            "aplite",
             "basalt",
             "chalk",
+            "diorite",
             "emery",
-            "gabbro"
+            "gabbro",
+            "flint"
         ],
         "uuid": "af514188-b667-4d9c-9523-9eebdacbefa3",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.1"
 }
