@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include <stdlib.h>
 
 // Persistent storage key
 #define SETTINGS_KEY 1
@@ -6,6 +7,7 @@
 // Define our settings struct
 typedef struct ClaySettings {
   char Camper[10];
+  uint16_t RandomUpdateMinutes;
 } ClaySettings;
 
 // An instance of the struct
@@ -22,10 +24,19 @@ static BitmapLayer *s_chathead_layer;
 uint8_t chathead_size;
 static GFont s_main_font;
 static GFont s_seco_font;
+static time_t s_last_update;
+static const uint32_t s_random_faces[] = {
+  RESOURCE_ID_HEAD_RIN,
+  RESOURCE_ID_HEAD_NADESHIKO,
+  RESOURCE_ID_HEAD_CHIAKI,
+  RESOURCE_ID_HEAD_AOI,
+  RESOURCE_ID_HEAD_ENA,
+};
 
 // Set default settings
 static void prv_default_settings() {
   strncpy(settings.Camper, "rin", 10);
+  settings.RandomUpdateMinutes = 60;
 }
 
 // Save settings to persistent storage
@@ -57,7 +68,11 @@ static void update_chathead(){
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_AOI);
 	} else if (strcmp(settings.Camper,"ena") == 0) {
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_ENA);
-	}
+	} else if (strcmp(settings.Camper,"random") == 0) {
+		int i_camper = rand() % (sizeof(s_random_faces) / sizeof(s_random_faces[0]));
+		s_chathead = gbitmap_create_with_resource(s_random_faces[i_camper]);
+		s_last_update = time(NULL) / 60;
+  }
 	
 	bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
   bitmap_layer_set_bitmap(s_chathead_layer, s_chathead);
@@ -91,18 +106,30 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+  
+  // If using a random camper, and it's time to change, update camper!
+  if (strcmp(settings.Camper,"random") == 0 &&
+      time(NULL) / 60 - s_last_update >= settings.RandomUpdateMinutes) {
+        update_chathead();
+  }
 }
 
 // AppMessage received handler
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Check for Clay settings data
   Tuple *camper_t = dict_find(iterator, MESSAGE_KEY_Camper);
+  Tuple *update_minutes_t = dict_find(iterator, MESSAGE_KEY_RandomUpdateMinutes);
+
   if (camper_t) {
     strncpy(settings.Camper, camper_t->value->cstring, 10);
   }
 
+  if (update_minutes_t) {
+    settings.RandomUpdateMinutes = atoi(update_minutes_t->value->cstring);
+  }
+
   // Save and apply if any settings were changed
-  if (camper_t) {
+  if (camper_t || update_minutes_t) {
     prv_save_settings();
     prv_update_display();
   }
@@ -213,6 +240,7 @@ static void main_window_unload(Window *window) {
 static void init() {
 	// Load settings before creating UI
   prv_load_settings();
+  srand(time(NULL));
 	
   // Create main Window element and assign to pointer
   s_main_window = window_create();
