@@ -14,7 +14,8 @@
         "displayName": "Yuru Camp Mount Fuji",
         "enableMultiJS": true,
         "messageKeys": [
-            "Camper"
+            "Camper",
+            "RandomUpdateMinutes"
         ],
         "projectType": "native",
         "resources": {

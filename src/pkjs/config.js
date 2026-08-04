@@ -43,8 +43,24 @@ module.exports = [
 					{
 						"label": "Ena Saitou",
 						"value": "ena"
+					},
+					{
+						"label": "Random",
+						"value": "random"
 					}
         ]
+      },
+      {
+        "type": "input",
+        "messageKey": "RandomUpdateMinutes",
+        "label": "Random update interval (min.)",
+        "defaultValue": "60",
+        "attributes": {
+          "type": "number",
+          "min" : "1",
+          "max": "1440",
+          "step": "1"
+        }
       }
     ]
   },
