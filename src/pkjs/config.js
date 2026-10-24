@@ -45,7 +45,17 @@ module.exports = [
 						"value": "ena"
 					}
         ]
-      }
+      },{
+				"type": "toggle",
+				"messageKey": "TextDark",
+				"label": "Dark Text",
+				"defaultValue": false
+			},{
+				"type": "toggle",
+				"messageKey": "BGDark",
+				"label": "Nighttime mount Fuji",
+				"defaultValue": true
+			}
     ]
   },
   {

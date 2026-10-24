@@ -6,6 +6,9 @@
 // Define our settings struct
 typedef struct ClaySettings {
   char Camper[10];
+	bool TextDark;
+	bool BGTimed;
+	bool BGDark;
 } ClaySettings;
 
 // An instance of the struct
@@ -14,7 +17,6 @@ static ClaySettings settings;
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
-// Our image
 static GBitmap *s_bg;
 static GBitmap *s_chathead;
 static BitmapLayer *s_bg_layer;
@@ -26,6 +28,9 @@ static GFont s_seco_font;
 // Set default settings
 static void prv_default_settings() {
   strncpy(settings.Camper, "rin", 10);
+	settings.TextDark = false;
+	settings.BGTimed = false;
+	settings.BGDark = true;
 }
 
 // Save settings to persistent storage
@@ -41,12 +46,44 @@ static void prv_load_settings() {
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
 
+// This function sets the Textcolor to either white or black, based on the setting.
+static void update_textcolor(){
+	if (settings.TextDark == false){
+		text_layer_set_text_color(s_time_layer, GColorWhite);
+		text_layer_set_text_color(s_date_layer, GColorWhite);
+	} else {
+		text_layer_set_text_color(s_time_layer, GColorBlack);
+		text_layer_set_text_color(s_date_layer, GColorBlack);
+	}
+}
+
+// This function updates the background image
+static void update_bgimage(){
+	// If BGTimed is false, the user can select the daytime or nighttime background. Otherwise it should change it based on the time.
+	if (settings.BGTimed == false){
+		if (settings.BGDark == false){ // False means not a dark background, so it should be BG_FUJI_DAY
+			gbitmap_destroy(s_bg); // Always destroy before change
+			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
+		} else { // True means a dark background, so it should be BG_FUJI (legacy name from when there was just this one background)
+			gbitmap_destroy(s_bg); // Always destroy before change
+			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+		}
+	}
+	
+	// Set compositing mode and bitmap in the layer.
+	bitmap_layer_set_compositing_mode(s_bg_layer, GCompOpSet);
+  bitmap_layer_set_bitmap(s_bg_layer, s_bg);
+}
+
+// This function updates the "chathead" to whatever is set.
 static void update_chathead(){
+	// Always destroy the image if it has been set
 	if (s_chathead != NULL){
     gbitmap_destroy(s_chathead);
     s_chathead = NULL;
   }
 	
+	// Then set it. Values not set down here means there won't be a bitmap set. In that case it remains destroyed.
 	if (strcmp(settings.Camper,"rin") == 0){
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN);
 	} else if (strcmp(settings.Camper,"nadeshiko") == 0) {
@@ -59,6 +96,7 @@ static void update_chathead(){
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_ENA);
 	}
 	
+	// Set compositing mode and bitmap in the layer.
 	bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
   bitmap_layer_set_bitmap(s_chathead_layer, s_chathead);
 }
@@ -66,6 +104,8 @@ static void update_chathead(){
 // Apply settings to UI elements
 static void prv_update_display() {
 	update_chathead();
+	update_textcolor();
+	update_bgimage();
 }
 
 static void update_time() {
@@ -93,16 +133,24 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
 }
 
-// AppMessage received handler
+// AppMessage received handler, basically listener for the settings.
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Check for Clay settings data
   Tuple *camper_t = dict_find(iterator, MESSAGE_KEY_Camper);
   if (camper_t) {
     strncpy(settings.Camper, camper_t->value->cstring, 10);
   }
+	Tuple *textdark_t = dict_find(iterator, MESSAGE_KEY_TextDark);
+	if (textdark_t) {
+		settings.TextDark = textdark_t->value->int32 == 1;
+	}
+	Tuple *bgdark_t = dict_find(iterator, MESSAGE_KEY_BGDark);
+	if (bgdark_t) {
+		settings.BGDark = bgdark_t->value->int32 == 1;
+	}
 
   // Save and apply if any settings were changed
-  if (camper_t) {
+  if (camper_t || textdark_t || bgdark_t) {
     prv_save_settings();
     prv_update_display();
   }
@@ -166,7 +214,7 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date_layer, s_seco_font);
   text_layer_set_text_alignment(s_date_layer, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft));
 	
-	s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+	s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI); 
 	s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN); // Rin is standard, if its not the one that is set, its changed later when calling prv_update_display()
 	
 	// Create background image bitmaplayer
@@ -195,15 +243,16 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, bitmap_layer_get_layer(s_chathead_layer));
 	
-	// Apply saved settings
+	// Apply saved settings, since if the user has used the watchface before they might have set something different.
   prv_update_display();
 }
 
 static void main_window_unload(Window *window) {
-  // Destroy TextLayers
+  // Destroy TextLayers and unload fonts
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_date_layer);
 	fonts_unload_custom_font(s_main_font);
+	//Destroy bitmaps and layers
 	gbitmap_destroy(s_bg);
 	gbitmap_destroy(s_chathead);
   bitmap_layer_destroy(s_bg_layer);
@@ -218,7 +267,7 @@ static void init() {
   s_main_window = window_create();
 
   // Set the background color
-  window_set_background_color(s_main_window, GColorBlack);
+  window_set_background_color(s_main_window, GColorBlack); //DEV: Is this needed with our background image?
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
