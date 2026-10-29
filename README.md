@@ -3,7 +3,7 @@
 # Yuru Camp Mount Fuji WatchFace
 
 ## Description
-Camp with your favorite camper from Yuru Camp with a beautifull night view of mount Fuji! Cozy and comfy, this watchface will surely make you help relax.
+Camp with your favorite camper from Yuru Camp with a beautiful night (or day!) view of mount Fuji! Cozy and comfy, this watchface will surely make you help relax.
 
 ## Goals
 My goals for this watchface can be described as the following:
@@ -11,6 +11,7 @@ My goals for this watchface can be described as the following:
 - It has to be as cozy and comfy as Yuru Camp.
 - It needs to work on all color platforms of Pebble, including the round ones.
 - Be a bit more complex with images than my previous watchfaces
+- Extend Clay, do some manipulating I haven't done before
 
 ## Current supported platforms
 | **Platform** | **Model**        | **Resolution** | **Colors** | **Tested** |
