@@ -6,9 +6,11 @@
 // Define our settings struct
 typedef struct ClaySettings {
   char Camper[10];
-	bool TextDark;
+	bool TextDark; // TODO: Have a color picker as this doesn't work that great. Also, keep in mind the monochrome screens.
 	bool BGTimed;
 	bool BGDark;
+	int StartDay;
+	int StartNight;
 } ClaySettings;
 
 // An instance of the struct
@@ -31,6 +33,8 @@ static void prv_default_settings() {
 	settings.TextDark = false;
 	settings.BGTimed = false;
 	settings.BGDark = true;
+	settings.StartDay = 6;
+	settings.StartNight = 18;
 }
 
 // Save settings to persistent storage
@@ -46,7 +50,8 @@ static void prv_load_settings() {
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
 
-// This function sets the Textcolor to either white or black, based on the setting.
+// This function sets the Textcolor to either white or black, based on the setting. 
+// TODO: Let the user choose a textcolor, and on monochrome pebbles we just need to make it visible against the background.
 static void update_textcolor(){
 	if (settings.TextDark == false){
 		text_layer_set_text_color(s_time_layer, GColorWhite);
@@ -59,12 +64,33 @@ static void update_textcolor(){
 
 // This function updates the background image
 static void update_bgimage(){
-	// If BGTimed is false, the user can select the daytime or nighttime background. Otherwise it should change it based on the time.
+	// If BGTimed is false, the user can select the daytime or nighttime background with BGDark. Otherwise it should change it based on the time.
 	if (settings.BGTimed == false){
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "BGTimed is false");
 		if (settings.BGDark == false){ // False means not a dark background, so it should be BG_FUJI_DAY
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
 		} else { // True means a dark background, so it should be BG_FUJI (legacy name from when there was just this one background)
+			gbitmap_destroy(s_bg); // Always destroy before change
+			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+		}
+	} else {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "BGTimed is true!");
+		time_t temp = time(NULL);
+		struct tm *tick_time = localtime(&temp);
+		
+		
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "tm_hour: %d", tick_time->tm_hour);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartDay: %d", settings.StartDay);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartNight: %d", settings.StartNight);
+		if (tick_time->tm_hour >= settings.StartDay && tick_time->tm_hour < settings.StartNight) {
+			// It is DAY, set a daytime background
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "BG should be Day");
+			gbitmap_destroy(s_bg); // Always destroy before change
+			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
+		} else {
+			// It is NIGHT, set a nighttime background
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "BG should be Night");
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
 		}
@@ -77,13 +103,13 @@ static void update_bgimage(){
 
 // This function updates the "chathead" to whatever is set.
 static void update_chathead(){
-	// Always destroy the image if it has been set
+	// Always destroy the image if it has been set.
 	if (s_chathead != NULL){
     gbitmap_destroy(s_chathead);
     s_chathead = NULL;
   }
 	
-	// Then set it. Values not set down here means there won't be a bitmap set. In that case it remains destroyed.
+	// Now set an image. Values not set down here means there won't be a bitmap set. In that case it remains destroyed.
 	if (strcmp(settings.Camper,"rin") == 0){
 		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN);
 	} else if (strcmp(settings.Camper,"nadeshiko") == 0) {
@@ -131,6 +157,12 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+	// Check if a background change is needed:
+	if (settings.BGTimed){
+		if ((units_changed & HOUR_UNIT) != 0) {
+			update_bgimage();
+  	}
+	}
 }
 
 // AppMessage received handler, basically listener for the settings.
@@ -148,9 +180,23 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	if (bgdark_t) {
 		settings.BGDark = bgdark_t->value->int32 == 1;
 	}
+	Tuple *bgtimed_t = dict_find(iterator, MESSAGE_KEY_BGTimed);
+	if (bgtimed_t) {
+		settings.BGTimed = bgtimed_t->value->int32 == 1;
+	}
+	Tuple *startday_t = dict_find(iterator, MESSAGE_KEY_StartDay);
+	if (startday_t) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartDay: %d", (int)startday_t->value->int32);
+		settings.StartDay = startday_t->value->int32;
+	}
+	Tuple *startnight_t = dict_find(iterator, MESSAGE_KEY_StartNight);
+	if (startnight_t) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartNight: %d", (int)startnight_t->value->int32);
+		settings.StartNight = startnight_t->value->int32;
+	}
 
   // Save and apply if any settings were changed
-  if (camper_t || textdark_t || bgdark_t) {
+  if (camper_t || textdark_t || bgdark_t || bgtimed_t || startday_t || startnight_t) {
     prv_save_settings();
     prv_update_display();
   }
@@ -267,7 +313,7 @@ static void init() {
   s_main_window = window_create();
 
   // Set the background color
-  window_set_background_color(s_main_window, GColorBlack); //DEV: Is this needed with our background image?
+  window_set_background_color(s_main_window, GColorBlack); //DEV: Is this needed with our background image? -> Yes, but mainly as a failsave.
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -282,7 +328,7 @@ static void init() {
   update_time();
 
   // Register with TickTimerService
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(MINUTE_UNIT | HOUR_UNIT, tick_handler); // Need to subscribe to the hours as well if we want to change the background on certain hours efficiently.
 	
 	// Register AppMessage callbacks
   app_message_register_inbox_received(inbox_received_callback);
