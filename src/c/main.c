@@ -11,6 +11,7 @@ typedef struct ClaySettings {
 	bool BGDark;
 	int StartDay;
 	int StartNight;
+	int RandomCamperInterval;
 } ClaySettings;
 
 // An instance of the struct
@@ -35,6 +36,7 @@ static void prv_default_settings() {
 	settings.BGDark = true;
 	settings.StartDay = 6;
 	settings.StartNight = 18;
+	settings.RandomCamperInterval = 60;
 }
 
 // Save settings to persistent storage
@@ -66,7 +68,6 @@ static void update_textcolor(){
 static void update_bgimage(){
 	// If BGTimed is false, the user can select the daytime or nighttime background with BGDark. Otherwise it should change it based on the time.
 	if (settings.BGTimed == false){
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "BGTimed is false");
 		if (settings.BGDark == false){ // False means not a dark background, so it should be BG_FUJI_DAY
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
@@ -75,22 +76,15 @@ static void update_bgimage(){
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
 		}
 	} else {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "BGTimed is true!");
 		time_t temp = time(NULL);
 		struct tm *tick_time = localtime(&temp);
 		
-		
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "tm_hour: %d", tick_time->tm_hour);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartDay: %d", settings.StartDay);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartNight: %d", settings.StartNight);
 		if (tick_time->tm_hour >= settings.StartDay && tick_time->tm_hour < settings.StartNight) {
 			// It is DAY, set a daytime background
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "BG should be Day");
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
 		} else {
 			// It is NIGHT, set a nighttime background
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "BG should be Night");
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
 		}
@@ -186,12 +180,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	}
 	Tuple *startday_t = dict_find(iterator, MESSAGE_KEY_StartDay);
 	if (startday_t) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartDay: %d", (int)startday_t->value->int32);
 		settings.StartDay = startday_t->value->int32;
 	}
 	Tuple *startnight_t = dict_find(iterator, MESSAGE_KEY_StartNight);
 	if (startnight_t) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "StartNight: %d", (int)startnight_t->value->int32);
 		settings.StartNight = startnight_t->value->int32;
 	}
 

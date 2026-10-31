@@ -25,8 +25,22 @@ module.exports = [
           { "label": "Nadeshiko Kagamihara", "value": "nadeshiko" },
           { "label": "Chiaki Ohgaki", "value": "chiaki" },
           { "label": "Aoi Inuyama", "value": "aoi" },
-          { "label": "Ena Saitou", "value": "ena" }
+          { "label": "Ena Saitou", "value": "ena" },
+					{ "label": "Select randomly", "value": "random"},
         ]
+      },
+			{
+				"type": "input",
+				"messageKey": "RandomCamperInterval",
+				"label": "Random update interval (min.)",
+				"defaultValue": "60",
+				"description": "Set the amount of minutes on which the a new random camper needs to be selected. 1440 minutes is 24 hours.",
+				"attributes": {
+					"type": "number",
+					"min" : "1",
+					"max": "1440",
+					"step": "1"
+				}
       },
       {
         "type": "toggle",

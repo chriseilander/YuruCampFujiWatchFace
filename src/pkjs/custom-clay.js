@@ -4,6 +4,7 @@ module.exports = function(minified) {
   // Need to wait on EVENTS.AFTER_BUILD before manipulating
   clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {
 		
+		// This function set the min value of StartNight based on whats set in StartDay.
 		function setNightInputMin() {
 			var startDayInput = clayConfig.getItemByMessageKey('StartDay');
       var startNightInput = clayConfig.getItemByMessageKey('StartNight');
@@ -17,7 +18,7 @@ module.exports = function(minified) {
 						var dayHour = parseInt(dayMatch[1], 10);
 						var minNightHour = (dayHour + 1) % 24;
 						
-						// Zorg voor geldige stringnotatie met voorloopnul (bijv. 7 -> "07:00")
+						// We need the right string format, so we need to change it from 7 to 07:00 for example.
 						var minNightString = (minNightHour < 10 ? '0' : '') + minNightHour + ':00';
 						// Set the min value
 						if (startNightInput.$element) {
@@ -41,6 +42,7 @@ module.exports = function(minified) {
 			}
 		}
     
+		// This function shows and hides several items based on whether the user wants a timed background.
     function toggleTimedSection() {
       var bgTimedToggle = clayConfig.getItemByMessageKey('BGTimed');
       var timedBGHeading = clayConfig.getItemById('timedBGHeading');
@@ -66,11 +68,26 @@ module.exports = function(minified) {
         }
       }
     }
+		
+		// This function shows and hides the interval input based on the selected camper.
+		function toggleRandomCamperIntervalInput() {
+			var camperInput = clayConfig.getItemByMessageKey('Camper');
+			var intervalInput = clayConfig.getItemByMessageKey('RandomCamperInterval');
+			
+			if (camperInput) {
+				if (camperInput.get() == "random") {
+					intervalInput.show();
+				} else {
+					intervalInput.hide();
+				}
+			}
+		}
 
     // Execute as soon as possible so the settings are correct.
     toggleTimedSection();
+		toggleRandomCamperIntervalInput();
 
-    // Listen to changes on the toggle switch, and fire the function.
+    // Listen to changes on the toggle switch, and fire the function to show and hide the right settings.
     var bgTimedToggle = clayConfig.getItemByMessageKey('BGTimed');
     if (bgTimedToggle) {
       bgTimedToggle.on('change', toggleTimedSection);
@@ -81,5 +98,11 @@ module.exports = function(minified) {
     if (startDayInput) {
       startDayInput.on('change', setNightInputMin);
     }
+		
+		// Listen to changes on the Camper Select, and fire the function to show or hide the interval input.
+		var camperInput = clayConfig.getItemByMessageKey('Camper');
+		if (camperInput) {
+			camperInput.on('change', toggleRandomCamperIntervalInput);
+		}
   });
 };

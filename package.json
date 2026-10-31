@@ -19,7 +19,8 @@
             "BGTimed",
             "BGDark",
             "StartDay",
-            "StartNight"
+            "StartNight",
+            "RandomCamperInterval"
         ],
         "projectType": "native",
         "resources": {
