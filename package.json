@@ -18,6 +18,7 @@
             "TextDark",
             "BGTimed",
             "BGDark",
+            "UseRandomCamper",
             "StartDay",
             "StartNight",
             "RandomCamperInterval"

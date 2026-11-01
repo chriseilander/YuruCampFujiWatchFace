@@ -5,13 +5,15 @@
 
 // Define our settings struct
 typedef struct ClaySettings {
-  char Camper[10];
+  char Camper[10]; // The camper (or none) the user wants to show.
 	bool TextDark; // TODO: Have a color picker as this doesn't work that great. Also, keep in mind the monochrome screens.
-	bool BGTimed;
-	bool BGDark;
-	int StartDay;
-	int StartNight;
-	int RandomCamperInterval;
+	bool BGTimed; // If the user wants the background to change with time.
+	bool BGDark; // If the user wants the daytime or nighttime background.
+	bool UseRandomCamper; // Whether the user wants a random camper or not.
+	int StartDay; // Time when to switch to daytime background.
+	int StartNight; // Time when to switch to nighttime background.
+	int RandomCamperInterval; // The interval in minutes to change the camper.
+	time_t LastUpdateMinutes; // Time in minutes since last changed the random camper. Not a MessageKey.
 } ClaySettings;
 
 // An instance of the struct
@@ -28,15 +30,33 @@ uint8_t chathead_size;
 static GFont s_main_font;
 static GFont s_seco_font;
 
+// A struct for our chatheads
+typedef struct {
+    const char *name;
+    uint32_t resource_id;
+} ChatHeadInfo;
+
+// The actual chatheads are saved into s_camperheads
+static const ChatHeadInfo s_camperheads[] = {
+    {"rin",       RESOURCE_ID_HEAD_RIN},
+    {"nadeshiko", RESOURCE_ID_HEAD_NADESHIKO},
+    {"chiaki",    RESOURCE_ID_HEAD_CHIAKI},
+    {"aoi",       RESOURCE_ID_HEAD_AOI},
+    {"ena",       RESOURCE_ID_HEAD_ENA},
+};
+
 // Set default settings
 static void prv_default_settings() {
-  strncpy(settings.Camper, "rin", 10);
+  strncpy(settings.Camper, "rin", sizeof(settings.Camper));
+	settings.Camper[sizeof(settings.Camper) - 1] = '\0'; 
 	settings.TextDark = false;
 	settings.BGTimed = false;
 	settings.BGDark = true;
 	settings.StartDay = 6;
 	settings.StartNight = 18;
 	settings.RandomCamperInterval = 60;
+	settings.UseRandomCamper = false;
+  settings.LastUpdateMinutes = 0;
 }
 
 // Save settings to persistent storage
@@ -50,6 +70,16 @@ static void prv_load_settings() {
   prv_default_settings();
   // Then override with any saved values
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+}
+
+// This function returns the right resource for the chathead/camper
+static uint32_t get_camper_resource(const char *name) {
+	for (size_t i = 0; i < sizeof(s_camperheads) / sizeof(s_camperheads[0]); i++) {
+		if (strcmp(name, s_camperheads[i].name) == 0) {
+			return s_camperheads[i].resource_id;
+		}
+	}
+	return 0;  // If we can't find it, return 0
 }
 
 // This function sets the Textcolor to either white or black, based on the setting. 
@@ -103,22 +133,16 @@ static void update_chathead(){
     s_chathead = NULL;
   }
 	
-	// Now set an image. Values not set down here means there won't be a bitmap set. In that case it remains destroyed.
-	if (strcmp(settings.Camper,"rin") == 0){
-		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN);
-	} else if (strcmp(settings.Camper,"nadeshiko") == 0) {
-		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_NADESHIKO);
-	} else if (strcmp(settings.Camper,"chiaki") == 0) {
-		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_CHIAKI);
-	} else if (strcmp(settings.Camper,"aoi") == 0) {
-		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_AOI);
-	} else if (strcmp(settings.Camper,"ena") == 0) {
-		s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_ENA);
+	uint32_t resource_id = get_camper_resource(settings.Camper); // Grab the camper we need.
+	if (resource_id != 0) { // Remember, 0 means no resource could be found.
+		s_chathead = gbitmap_create_with_resource(resource_id);
 	}
-	
-	// Set compositing mode and bitmap in the layer.
-	bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
-  bitmap_layer_set_bitmap(s_chathead_layer, s_chathead);
+
+	if (s_chathead) {
+		// Set compositing mode and bitmap in the layer if s_chathead exists.
+		bitmap_layer_set_compositing_mode(s_chathead_layer, GCompOpSet);
+		bitmap_layer_set_bitmap(s_chathead_layer, s_chathead);
+	}
 }
 
 // Apply settings to UI elements
@@ -126,6 +150,16 @@ static void prv_update_display() {
 	update_chathead();
 	update_textcolor();
 	update_bgimage();
+}
+
+static void select_random_camper() {
+	int i_camper = rand() % (sizeof(s_camperheads) / sizeof(s_camperheads[0])); // We select a random index
+	strncpy(settings.Camper, s_camperheads[i_camper].name, sizeof(settings.Camper) -1); // Save the name of the selected camper
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Random camper selected: %s", s_camperheads[i_camper].name);
+	settings.Camper[sizeof(settings.Camper) -1] = '\0'; 
+	settings.LastUpdateMinutes = time(NULL) / 60;
+	prv_save_settings();
+	update_chathead();  // Show the newly selected camper.
 }
 
 static void update_time() {
@@ -151,11 +185,25 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+	
 	// Check if a background change is needed:
 	if (settings.BGTimed){
 		if ((units_changed & HOUR_UNIT) != 0) {
 			update_bgimage();
   	}
+	}
+	
+	// Check if we need to select a new random camper
+	if (settings.UseRandomCamper) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Tick Handler fired and UseRandCamper == true");
+		time_t now = time(NULL) / 60;
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Now: %d", now);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "RandomCamperInterval: %d", settings.RandomCamperInterval);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "LastUpdateMinutes: %d", settings.LastUpdateMinutes);
+		if (now - settings.LastUpdateMinutes >= settings.RandomCamperInterval) {
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "Now - LastUpdateMinutes is equal or bigger than RandomCamperInterval");
+			select_random_camper();
+		}
 	}
 }
 
@@ -164,19 +212,32 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Check for Clay settings data
   Tuple *camper_t = dict_find(iterator, MESSAGE_KEY_Camper);
   if (camper_t) {
-    strncpy(settings.Camper, camper_t->value->cstring, 10);
+    strncpy(settings.Camper, camper_t->value->cstring, sizeof(settings.Camper));
+    settings.Camper[sizeof(settings.Camper) - 1] = '\0';
   }
 	Tuple *textdark_t = dict_find(iterator, MESSAGE_KEY_TextDark);
 	if (textdark_t) {
 		settings.TextDark = textdark_t->value->int32 == 1;
 	}
+	Tuple *bgtimed_t = dict_find(iterator, MESSAGE_KEY_BGTimed);
+	if (bgtimed_t) {
+		settings.BGTimed = bgtimed_t->value->int32 == 1;
+	}
 	Tuple *bgdark_t = dict_find(iterator, MESSAGE_KEY_BGDark);
 	if (bgdark_t) {
 		settings.BGDark = bgdark_t->value->int32 == 1;
 	}
-	Tuple *bgtimed_t = dict_find(iterator, MESSAGE_KEY_BGTimed);
-	if (bgtimed_t) {
-		settings.BGTimed = bgtimed_t->value->int32 == 1;
+	Tuple *randomcamper_t = dict_find(iterator, MESSAGE_KEY_UseRandomCamper);
+	if (randomcamper_t){
+    bool new_random = randomcamper_t->value->int32 == 1;
+    if (new_random != settings.UseRandomCamper) {
+			// Only if the setting has changed do we write it to settings
+			settings.UseRandomCamper = new_random;
+			if (new_random) {
+				// Random mode is enabled, select a random camper.
+        select_random_camper();
+      }
+    }
 	}
 	Tuple *startday_t = dict_find(iterator, MESSAGE_KEY_StartDay);
 	if (startday_t) {
@@ -186,9 +247,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	if (startnight_t) {
 		settings.StartNight = startnight_t->value->int32;
 	}
+	Tuple *randomcamperinterval_t = dict_find(iterator, MESSAGE_KEY_RandomCamperInterval);
+	if (randomcamperinterval_t) {
+		settings.RandomCamperInterval = randomcamperinterval_t->value->int32;
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "RandomCamperInterval written: %d", randomcamperinterval_t->value->int32);
+	}
 
   // Save and apply if any settings were changed
-  if (camper_t || textdark_t || bgdark_t || bgtimed_t || startday_t || startnight_t) {
+  if (camper_t || textdark_t || bgtimed_t || bgdark_t || randomcamper_t || startday_t || startnight_t || randomcamperinterval_t) {
     prv_save_settings();
     prv_update_display();
   }

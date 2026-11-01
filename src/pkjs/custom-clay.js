@@ -69,16 +69,21 @@ module.exports = function(minified) {
       }
     }
 		
-		// This function shows and hides the interval input based on the selected camper.
+		// This function shows and hides the interval input and camper select based on the value of the UseRandomCamper toggle.
 		function toggleRandomCamperIntervalInput() {
+			var randomToggle = clayConfig.getItemByMessageKey('UseRandomCamper');
 			var camperInput = clayConfig.getItemByMessageKey('Camper');
 			var intervalInput = clayConfig.getItemByMessageKey('RandomCamperInterval');
 			
-			if (camperInput) {
-				if (camperInput.get() == "random") {
+			if (randomToggle) {
+				if (randomToggle.get()) {
+					// Random camper is true, so show the interval and hide the camper selector.
 					intervalInput.show();
+					camperInput.hide();					
 				} else {
+					// And the other way around
 					intervalInput.hide();
+					camperInput.show();
 				}
 			}
 		}
@@ -99,10 +104,10 @@ module.exports = function(minified) {
       startDayInput.on('change', setNightInputMin);
     }
 		
-		// Listen to changes on the Camper Select, and fire the function to show or hide the interval input.
-		var camperInput = clayConfig.getItemByMessageKey('Camper');
-		if (camperInput) {
-			camperInput.on('change', toggleRandomCamperIntervalInput);
+		// Listen to changes on the Random Camper toggle, and fire the function to show or hide the interval input and Camper select.
+		var randomToggle = clayConfig.getItemByMessageKey('UseRandomCamper');
+		if (randomToggle) {
+			randomToggle.on('change', toggleRandomCamperIntervalInput);
 		}
   });
 };

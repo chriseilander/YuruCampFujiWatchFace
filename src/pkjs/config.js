@@ -14,11 +14,11 @@ module.exports = [
         "size": "2"
       },
       {
-        "type": "select",
+				"type": "select",
         "messageKey": "Camper",
         "label": "Who is your favorite camper?",
         "defaultValue": "rin",
-        "description": "Shows a little portrait of your favorite camper.",
+        "description": "Shows a little portrait of your favorite camper if one is selected, or select none.",
         "options": [
           { "label": "None", "value": "none" },
           { "label": "Rin Shima", "value": "rin" },
@@ -26,20 +26,27 @@ module.exports = [
           { "label": "Chiaki Ohgaki", "value": "chiaki" },
           { "label": "Aoi Inuyama", "value": "aoi" },
           { "label": "Ena Saitou", "value": "ena" },
-					{ "label": "Select randomly", "value": "random"},
         ]
       },
+			{
+				"type": "toggle",
+				"messageKey": "UseRandomCamper",
+        "label": "Random Camper",
+        "defaultValue": false,
+				"description": "Or if you can't choose, make it random."
+    	},
 			{
 				"type": "input",
 				"messageKey": "RandomCamperInterval",
 				"label": "Random update interval (min.)",
-				"defaultValue": "60",
+				"defaultValue": 60,
+				"serializeValueAs": "integer",
 				"description": "Set the amount of minutes on which the a new random camper needs to be selected. 1440 minutes is 24 hours.",
 				"attributes": {
 					"type": "number",
-					"min" : "1",
-					"max": "1440",
-					"step": "1"
+					"min" : 1,
+					"max": 1440,
+					"step": 1
 				}
       },
       {
