@@ -339,7 +339,8 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date_layer, s_seco_font);
   text_layer_set_text_alignment(s_date_layer, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft));
 	
-	s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI); 
+	s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+	s_curr_bg_id = (RESOURCE_ID_BG_FUJI);
 	s_chathead = gbitmap_create_with_resource(RESOURCE_ID_HEAD_RIN); // Rin is standard, if its not the one that is set, its changed later when calling prv_update_display()
 	
 	// Create background image bitmaplayer
