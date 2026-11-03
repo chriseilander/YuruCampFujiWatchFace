@@ -15,7 +15,9 @@
         "enableMultiJS": true,
         "messageKeys": [
             "Camper",
-            "TextDark",
+            "AutoTextColor",
+            "TimeColor",
+            "DateColor",
             "BGTimed",
             "BGDark",
             "UseRandomCamper",

@@ -10,9 +10,17 @@ module.exports = [
     "items": [
       {
         "type": "heading",
+				"id": "MainSectionHeading",
         "defaultValue": "General",
         "size": "2"
       },
+			{
+				"type": "toggle",
+				"messageKey": "UseRandomCamper",
+        "label": "Random Camper",
+        "defaultValue": false,
+				"description": "Or if you can't choose, make it random."
+    	},
       {
 				"type": "select",
         "messageKey": "Camper",
@@ -29,13 +37,6 @@ module.exports = [
         ]
       },
 			{
-				"type": "toggle",
-				"messageKey": "UseRandomCamper",
-        "label": "Random Camper",
-        "defaultValue": false,
-				"description": "Or if you can't choose, make it random."
-    	},
-			{
 				"type": "input",
 				"messageKey": "RandomCamperInterval",
 				"label": "Random update interval (min.)",
@@ -49,12 +50,24 @@ module.exports = [
 					"step": 1
 				}
       },
-      {
+    ]
+  },
+	{
+		"type": "section",
+		"id": "BGSection",
+		"items": [
+			{
+        "type": "heading",
+        "id": "BGSectionHeading",
+        "defaultValue": "Background Settings",
+        "size": "4"
+      },
+			{
         "type": "toggle",
-        "messageKey": "TextDark",
-        "label": "Dark Text",
+        "messageKey": "BGTimed",
+        "label": "Timed background",
         "defaultValue": false,
-				"description": "Turning this on will make the text black. Off is white.",
+				"description": "If you want the background to change based on the time, turn this on. You can set the times below."
       },
       {
         "type": "toggle",
@@ -63,24 +76,11 @@ module.exports = [
         "defaultValue": true,
 				"description": "On is nighttime background, off is daytime background"
       },
-      {
-        "type": "toggle",
-        "messageKey": "BGTimed",
-        "label": "Timed background",
-        "defaultValue": false,
-				"description": "If you want the background to change based on the time, turn this on. You can set the times below."
-      }
-    ]
-  },
-  {
-    "type": "section",
-    "id": "timedBGSection",
-    "items": [
-      {
+			{
         "type": "heading",
         "id": "timedBGHeading",
         "defaultValue": "Timed Background Settings",
-        "size": "4"
+        "size": "5"
       },
       {
         "type": "input",
@@ -110,6 +110,42 @@ module.exports = [
           "min": "07:00"
         }
       }
+		]
+	},
+  {
+    "type": "section",
+    "id": "TextSection",
+		"capabilities": ["COLOR"],
+    "items": [
+      {
+        "type": "heading",
+        "id": "TextSectionHeading",
+        "defaultValue": "Text Color Settings",
+        "size": "4",
+				"capabilities": ["COLOR"]
+      },
+			{
+        "type": "toggle",
+        "messageKey": "AutoTextColor",
+        "label": "Auto Text Color",
+        "defaultValue": true,
+				"description": "Change the color of the time and date automatically based on the background.",
+				"capabilities": ["COLOR"]
+      },
+			{
+        "type": "color",
+        "messageKey": "TimeColor",
+				"label": "Time Color",
+        "defaultValue": "0xFFFFFF",
+				"capabilities": ["COLOR"]
+      },
+			{
+        "type": "color",
+        "messageKey": "DateColor",
+				"label": "Date Color",
+        "defaultValue": "0xFFFFFF",
+				"capabilities": ["COLOR"]
+      },
     ]
   },
   {

@@ -6,7 +6,9 @@
 // Define our settings struct
 typedef struct ClaySettings {
   char Camper[10]; // The camper (or none) the user wants to show.
-	bool TextDark; // TODO: Have a color picker as this doesn't work that great. Also, keep in mind the monochrome screens.
+	bool AutoTextColor;
+	GColor TimeColor;
+	GColor DateColor;
 	bool BGTimed; // If the user wants the background to change with time.
 	bool BGDark; // If the user wants the daytime or nighttime background.
 	bool UseRandomCamper; // Whether the user wants a random camper or not.
@@ -29,6 +31,8 @@ static BitmapLayer *s_chathead_layer;
 uint8_t chathead_size;
 static GFont s_main_font;
 static GFont s_seco_font;
+static uint32_t s_curr_bg_id = 0;
+
 
 // A struct for our chatheads
 typedef struct {
@@ -49,7 +53,9 @@ static const ChatHeadInfo s_camperheads[] = {
 static void prv_default_settings() {
   strncpy(settings.Camper, "rin", sizeof(settings.Camper));
 	settings.Camper[sizeof(settings.Camper) - 1] = '\0'; 
-	settings.TextDark = false;
+	settings.AutoTextColor = true;
+	settings.TimeColor = GColorWhite;
+	settings.DateColor = GColorWhite;
 	settings.BGTimed = false;
 	settings.BGDark = true;
 	settings.StartDay = 6;
@@ -85,12 +91,21 @@ static uint32_t get_camper_resource(const char *name) {
 // This function sets the Textcolor to either white or black, based on the setting. 
 // TODO: Let the user choose a textcolor, and on monochrome pebbles we just need to make it visible against the background.
 static void update_textcolor(){
-	if (settings.TextDark == false){
-		text_layer_set_text_color(s_time_layer, GColorWhite);
-		text_layer_set_text_color(s_date_layer, GColorWhite);
+	if (settings.AutoTextColor){
+		// User wants textcolor to change depending on the background.
+		if(s_curr_bg_id == RESOURCE_ID_BG_FUJI_DAY){
+			// Day background, so black text.
+			text_layer_set_text_color(s_time_layer, GColorBlack);
+			text_layer_set_text_color(s_date_layer, GColorBlack);
+		} else {
+			// Night background, so white text.
+			text_layer_set_text_color(s_time_layer, GColorWhite);
+			text_layer_set_text_color(s_date_layer, GColorWhite);
+		}
 	} else {
-		text_layer_set_text_color(s_time_layer, GColorBlack);
-		text_layer_set_text_color(s_date_layer, GColorBlack);
+		// User defined their own colors.
+		text_layer_set_text_color(s_time_layer, settings.TimeColor);
+		text_layer_set_text_color(s_date_layer, settings.DateColor);
 	}
 }
 
@@ -101,9 +116,11 @@ static void update_bgimage(){
 		if (settings.BGDark == false){ // False means not a dark background, so it should be BG_FUJI_DAY
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
+			s_curr_bg_id = (RESOURCE_ID_BG_FUJI_DAY);
 		} else { // True means a dark background, so it should be BG_FUJI (legacy name from when there was just this one background)
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+			s_curr_bg_id = (RESOURCE_ID_BG_FUJI);
 		}
 	} else {
 		time_t temp = time(NULL);
@@ -113,10 +130,12 @@ static void update_bgimage(){
 			// It is DAY, set a daytime background
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI_DAY);
+			s_curr_bg_id = (RESOURCE_ID_BG_FUJI_DAY);
 		} else {
 			// It is NIGHT, set a nighttime background
 			gbitmap_destroy(s_bg); // Always destroy before change
 			s_bg = gbitmap_create_with_resource(RESOURCE_ID_BG_FUJI);
+			s_curr_bg_id = (RESOURCE_ID_BG_FUJI);
 		}
 	}
 	
@@ -148,14 +167,14 @@ static void update_chathead(){
 // Apply settings to UI elements
 static void prv_update_display() {
 	update_chathead();
-	update_textcolor();
+	// Background before text color, otherwise we can't set the text color properly based on the background.
 	update_bgimage();
+	update_textcolor();
 }
 
 static void select_random_camper() {
 	int i_camper = rand() % (sizeof(s_camperheads) / sizeof(s_camperheads[0])); // We select a random index
 	strncpy(settings.Camper, s_camperheads[i_camper].name, sizeof(settings.Camper) -1); // Save the name of the selected camper
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Random camper selected: %s", s_camperheads[i_camper].name);
 	settings.Camper[sizeof(settings.Camper) -1] = '\0'; 
 	settings.LastUpdateMinutes = time(NULL) / 60;
 	prv_save_settings();
@@ -195,13 +214,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	
 	// Check if we need to select a new random camper
 	if (settings.UseRandomCamper) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "Tick Handler fired and UseRandCamper == true");
 		time_t now = time(NULL) / 60;
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "Now: %d", now);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "RandomCamperInterval: %d", settings.RandomCamperInterval);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "LastUpdateMinutes: %d", settings.LastUpdateMinutes);
 		if (now - settings.LastUpdateMinutes >= settings.RandomCamperInterval) {
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "Now - LastUpdateMinutes is equal or bigger than RandomCamperInterval");
 			select_random_camper();
 		}
 	}
@@ -215,9 +229,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     strncpy(settings.Camper, camper_t->value->cstring, sizeof(settings.Camper));
     settings.Camper[sizeof(settings.Camper) - 1] = '\0';
   }
-	Tuple *textdark_t = dict_find(iterator, MESSAGE_KEY_TextDark);
-	if (textdark_t) {
-		settings.TextDark = textdark_t->value->int32 == 1;
+	Tuple *autotextcolor_t = dict_find(iterator, MESSAGE_KEY_AutoTextColor);
+	if (autotextcolor_t) {
+		settings.AutoTextColor = autotextcolor_t->value->int32 == 1;
+	}
+	Tuple *timecolor_t = dict_find(iterator, MESSAGE_KEY_TimeColor);
+	if (timecolor_t){
+		settings.TimeColor = GColorFromHEX(timecolor_t->value->int32);
+	}
+	Tuple *datecolor_t = dict_find(iterator, MESSAGE_KEY_DateColor);
+	if (datecolor_t) {
+		settings.DateColor = GColorFromHEX(datecolor_t->value->int32);
 	}
 	Tuple *bgtimed_t = dict_find(iterator, MESSAGE_KEY_BGTimed);
 	if (bgtimed_t) {
@@ -250,11 +272,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	Tuple *randomcamperinterval_t = dict_find(iterator, MESSAGE_KEY_RandomCamperInterval);
 	if (randomcamperinterval_t) {
 		settings.RandomCamperInterval = randomcamperinterval_t->value->int32;
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "RandomCamperInterval written: %d", randomcamperinterval_t->value->int32);
 	}
 
   // Save and apply if any settings were changed
-  if (camper_t || textdark_t || bgtimed_t || bgdark_t || randomcamper_t || startday_t || startnight_t || randomcamperinterval_t) {
+  if (camper_t || autotextcolor_t || timecolor_t || datecolor_t ||bgtimed_t || bgdark_t || randomcamper_t || startday_t || startnight_t || randomcamperinterval_t) {
     prv_save_settings();
     prv_update_display();
   }
