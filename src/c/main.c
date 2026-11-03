@@ -378,6 +378,7 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_date_layer);
 	fonts_unload_custom_font(s_main_font);
+	fonts_unload_custom_font(s_seco_font);
 	//Destroy bitmaps and layers
 	gbitmap_destroy(s_bg);
 	gbitmap_destroy(s_chathead);
