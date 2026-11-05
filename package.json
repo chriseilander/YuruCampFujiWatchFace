@@ -1,7 +1,7 @@
 {
     "author": "Chris Eilander",
     "dependencies": {
-        "@rebble/clay": "^1.0.10"
+        "@rebble/clay": "^1.1.0"
     },
     "keywords": [
         "pebble-app"
@@ -14,7 +14,16 @@
         "displayName": "Yuru Camp Mount Fuji",
         "enableMultiJS": true,
         "messageKeys": [
-            "Camper"
+            "Camper",
+            "AutoTextColor",
+            "TimeColor",
+            "DateColor",
+            "BGTimed",
+            "BGDark",
+            "UseRandomCamper",
+            "StartDay",
+            "StartNight",
+            "RandomCamperInterval"
         ],
         "projectType": "native",
         "resources": {
@@ -103,6 +112,12 @@
                     "name": "HEAD_AOI",
                     "targetPlatforms": null,
                     "type": "bitmap"
+                },
+                {
+                    "file": "images/fuji background day",
+                    "name": "BG_FUJI_DAY",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
                 }
             ]
         },
@@ -121,5 +136,5 @@
             "watchface": true
         }
     },
-    "version": "1.1.1"
+    "version": "1.2.0"
 }
